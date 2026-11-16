@@ -1,1 +1,104 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title></title><style>body{margin:0;background:#fff;color:#555;font:12px Arial,sans-serif;padding:12px}</style></head><body>репозиторий очищен</body></html>
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Геоточка — карта геодезических пунктов</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<dialog id="welcomeDialog" class="welcome-dialog" aria-labelledby="welcomeDialogTitle" aria-modal="true">
+  <div class="welcome-dialog-card">
+    <div class="welcome-dialog-heading"><b id="welcomeDialogTitle">Объявление</b><button id="welcomeDismissX" type="button" aria-label="Закрыть объявление" title="Закрыть">×</button></div>
+    <div id="welcomeDialogContent" class="welcome-dialog-content"></div>
+    <div class="welcome-dialog-footer"><button id="welcomeDismiss" type="button">Перейти к карте</button></div>
+  </div>
+</dialog>
+<dialog id="helpDialog" class="welcome-dialog help-dialog" aria-labelledby="helpDialogTitle" aria-modal="true">
+  <div class="welcome-dialog-card">
+    <div class="welcome-dialog-heading"><b id="helpDialogTitle">Справка по карте</b><button type="button" id="helpDismissX" aria-label="Закрыть справку" title="Закрыть">×</button></div>
+    <div id="helpDialogContent" class="welcome-dialog-content"></div>
+    <div class="welcome-dialog-footer"><button id="helpDismiss" type="button">Закрыть</button></div>
+  </div>
+</dialog>
+<div id="projectMessageBar" class="project-message-bar" hidden><div id="projectMessageText" class="project-message-text"></div></div>
+<header class="topbar">
+  <div class="logo"><b>ГЕОТОЧКА</b><span id="publicProjectName">v— · upd —</span></div>
+  <div class="search-wrap">
+    <input id="searchInput" placeholder="Пункт, координаты 45.567 34.774 или адрес…" autocomplete="off" />
+    <button id="clearSearch" title="Очистить">×</button>
+    <div id="searchResults" class="search-results" hidden></div>
+  </div>
+  <select id="regionFilter"><option value="">Все регионы</option></select>
+  <div class="visibility-shell" id="publicVisibilityShell">
+    <button type="button" id="publicVisibilityBtn" class="visibility-trigger" aria-expanded="false">◉ Вид</button>
+<div class="visibility-panel" id="publicVisibilityPanel" hidden>
+  <label class="visibility-master"><input type="checkbox" id="publicShowPoints" checked> Показывать пункты на карте</label>
+  <div class="visibility-panel-title">Фильтры пунктов</div>
+  <label><input type="checkbox" data-vis-flag="coord" checked> Без координат в СК</label>
+  <label><input type="checkbox" data-vis-flag="height" checked> Без высотных отметок</label>
+  <label><input type="checkbox" data-vis-flag="visits" checked> Без посещений</label>
+  <div class="visibility-panel-title visibility-type-title">Типы пунктов</div>
+  <div class="visibility-type-actions"><button type="button" data-vis-action="all">Все</button><button type="button" data-vis-action="none">Ни одного</button></div>
+  <div class="visibility-types" data-vis-types></div>
+  <div class="visibility-type-actions"><button type="button" data-vis-action="reset">Сбросить</button><span data-vis-count></span></div>
+</div>
+  </div>
+  <button type="button" id="importKmlBtn" class="import-kml-trigger" title="Добавить временные объекты KML на карту">⬆ Импорт KML</button>
+  <input type="file" id="importKmlFile" accept=".kml,application/vnd.google-earth.kml+xml" hidden aria-label="Выберите файл KML" />
+  <button type="button" class="about-site-link help-site-link" id="openHelpBtn">? Справка</button>
+  <a class="about-site-link" href="about.html">О проекте</a>
+  <div class="counter"><b id="pointCount">0</b><span>пунктов</span></div>
+</header>
+<main class="workspace">
+  <div id="map"></div>
+  <div id="temporaryKmlStatus" class="temporary-kml-status" role="status" aria-live="polite" hidden>
+    <span class="temporary-kml-swatch" aria-hidden="true"></span>
+    <span id="temporaryKmlText" class="temporary-kml-text"></span>
+    <button type="button" id="temporaryKmlZoom" title="Показать все объекты загруженного KML" hidden>К объектам</button>
+    <button type="button" id="temporaryKmlClear" title="Удалить временный KML-слой" hidden>Удалить</button>
+  </div>
+  <aside id="infoPanel" class="info-panel">
+    <div id="panelEmpty" class="panel-empty">
+      <div class="target">⌖</div><h2>Выберите пункт</h2>
+      <p>Кликните по маркеру или найдите пункт через строку поиска.</p>
+    </div>
+    <div id="panelContent" hidden>
+      <button id="closePanel" class="close">×</button>
+      <div id="pointCategory" class="kicker"></div>
+      <h1 id="pointName"></h1>
+      <div id="pointCode" class="code"></div>
+      <div id="conditionPill" class="condition"></div>
+      <div class="point-tabbar" role="tablist"><button type="button" id="pubCardTab" class="active" aria-selected="true">Карточка</button><button type="button" id="pubVisitsTab" aria-selected="false">Посещения</button></div>
+      <div id="pubCardBody"><div id="detailsTable" class="details"></div></div>
+      <div id="pubVisitsBody" hidden><div id="publicRatings"></div><div id="publicVisitTimeline"></div><div id="publicVisitPhotos"></div></div>
+      <div id="photoPreview" class="photo-preview" hidden></div>
+      <div class="actions">
+        <button id="pointCardBtn" class="primary-action">Создать карточку пункта</button>
+        <button id="exportKmlBtn">Экспорт KML</button>
+        <button id="addInfoBtn" class="visit-action">Добавить посещение</button>
+        <button id="reportErrorBtn" class="visit-action" style="background:#fff;color:#15569a;border:1px solid #cbd7e4;margin-top:8px">Сообщить об ошибке</button>
+        <button id="copyCoords">Копировать WGS84</button>
+        <button id="copyPointLinkBtn" type="button" title="Скопировать прямую ссылку на этот пункт">Копировать ссылку на пункт</button>
+        
+      </div>
+    </div>
+  </aside>
+  <div class="map-service-footer" aria-label="Условные обозначения карты">
+    <div class="public-legend public-status-legend"><span><i class="ldot active"></i>действующий</span><span><i class="ldot unknown"></i>неизвестно</span><span><i class="ldot missing"></i>не найден</span></div>
+    <div class="public-legend public-type-legend"><span><i class="type-shape tri"></i>ГГС</span><span><i class="type-shape square"></i>полигонометрия</span><span><i class="type-shape circle"></i>ОМС</span><span><i class="type-shape bench"></i>репер</span><span><i class="type-shape crosshair"></i>пользовательский</span></div>
+  </div>
+</main>
+<script type="application/x-geotochka" data-gt-src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+
+<script type="application/x-geotochka" data-gt-src="point_loader.js?v=0.96"></script>
+<script type="application/x-geotochka" data-gt-src="point_tools.js"></script>
+<script type="application/x-geotochka" data-gt-src="map_density.js"></script>
+<script type="application/x-geotochka" data-gt-src="kml_import.js"></script>
+<script type="application/x-geotochka" data-gt-src="links.js"></script>
+<script type="application/x-geotochka" data-gt-src="app.js?v=2.16"></script>
+<script src="site_config.js"></script>
+<script src="password_gate.js?v=2.10"></script>
+</body>
+</html>

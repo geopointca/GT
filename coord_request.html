@@ -1,0 +1,9 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Заявка на координаты · Геозаявка</title>
+<style>body{font:14px system-ui,Arial;margin:20px;color:#172839;background:#f1f4f7}main{max-width:980px;background:white;margin:auto;padding:18px;border:1px solid #adb9c6}h1{font-size:21px;margin:4px 0 12px}table{border-collapse:collapse;width:100%;margin:10px 0}td,th{border:1px solid #b9c6d2;padding:6px;text-align:left}th{background:#e9edf2}input,textarea{padding:6px;border:1px solid #9daebd;width:100%;box-sizing:border-box;font:inherit}button{font:inherit;cursor:pointer;padding:6px 11px;margin:2px;background:#e7edf4;border:1px solid #aab8c8}button.primary{background:#12613e;color:white;border-color:#12613e}label{display:block;margin:12px 0 4px}textarea{min-height:65px}#message{color:#a02727}small{color:#596875}</style>
+</head><body><main><a href="index.html">← Вернуться к карте</a><h1>Заявка на координаты</h1>
+<p>Выберите не более пяти пунктов. ZIP не содержит координат. Отправьте полученный ZIP владельцу каталога самостоятельно по электронной почте.</p>
+<label for="email"><b>Ваш адрес электронной почты</b></label><input id="email" type="email" maxlength="254" required placeholder="name@example.com" autocomplete="email">
+<table><thead><tr><th>ID</th><th>Индекс</th><th>Наименование пункта</th><th></th></tr></thead><tbody id="items"></tbody></table>
+<label for="comment">Комментарий (необязательно)</label><textarea id="comment" maxlength="2000"></textarea>
+<button class="primary" id="generate" type="button">Сформировать ZIP-заявку</button><span id="message" role="status"></span><p><small>Один пункт можно добавить только один раз. Поданные заявки не передаются автоматически.</small></p></main>
+<script src="jszip.min.js"></script><script src="geozayavka.js"></script><script src="coord_request.js"></script></body></html>

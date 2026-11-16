@@ -1,0 +1,23 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Карточка пункта — Геоточка</title><link rel="stylesheet" href="point_card.css"></head><body>
+<div class="toolbar"><div><strong>Карточка пункта · A4</strong> <small>ГЕОТОЧКА — печатная форма</small></div><button id="printBtn" type="button">Печать / Сохранить PDF</button></div>
+<main class="paper" id="paper"><div id="notFound" hidden>Пункт не найден.</div><article id="card" hidden>
+<header class="header"><div><div class="brand">ГЕО<span>ТОЧКА</span></div><div class="brand-sub">Каталог геодезических пунктов</div></div><div class="header-right"><div class="docmark"><strong>КАРТОЧКА ПУНКТА</strong>Формат А4</div><a class="point-qr" id="pointQrLink" href="#" target="_blank" rel="noopener noreferrer" title="Открыть пункт на карте" hidden><span class="point-qr-art" id="pointQrArt"></span><span class="point-qr-caption">Открыть на карте</span></a></div></header>
+<section class="hero"><div><div class="eyebrow">Геодезический пункт</div><h1 id="name"></h1><div class="subtitle">Индекс: <b id="code"></b></div></div><div class="status"><span class="label">Состояние пункта</span><strong id="condition"></strong></div></section>
+<section class="summary"><div class="field"><span class="label">Тип пункта</span><strong id="category"></strong></div><div class="field"><span class="label">Регион</span><strong id="region"></strong></div></section>
+<section class="other-fields" id="otherFields" hidden></section>
+<div class="para" id="descriptionSection"><span class="label">Описание местоположения</span><p id="description"></p></div>
+<div class="para" id="centerSection"><span class="label">Описание центра</span><p id="centerDescription"></p></div>
+<div class="para" id="publicNotesSection" hidden><span class="label">Дополнительные сведения</span><p id="publicNotes"></p></div>
+<div class="para"><span class="label">Положение WGS84</span><p><b id="wgs84"></b></p></div>
+<section id="xySection"><div class="section-head">Координаты пункта</div><table><thead><tr><th>Система координат</th><th>Север / X</th><th>Восток / Y</th><th>Высота H, м</th></tr></thead><tbody id="coordinatesBody"></tbody></table></section>
+<div class="section-head">История посещений</div><table><thead><tr><th style="width:17%">Дата</th><th style="width:20%">Обследователь</th><th>Результат / описание</th></tr></thead><tbody id="visitsBody"></tbody></table>
+<section id="ratingSection" hidden><div class="section-head">Оценки состояния</div><div class="rating-summary" id="ratingSummary"></div></section>
+<section id="commentsSection" hidden><div class="section-head">Комментарии</div><table class="comments-table"><thead><tr><th style="width:22%">Дата</th><th>Комментарий</th></tr></thead><tbody id="commentsBody"></tbody></table></section>
+<section id="photosSection"><div class="section-head">Фотографии пункта</div><section class="photos" id="photos"></section></section>
+<section id="materialsPrintSection" hidden><div class="section-head">Материалы и ссылки</div><div id="materialsPrintGrid" class="materials-qr-grid"></div></section>
+<footer class="footer"><div><strong>ГЕОТОЧКА</strong> · Публичный каталог геодезических пунктов<br>Сведения могут требовать проверки на местности.</div><div style="text-align:right">Дата создания карточки: <span id="creationDate"></span></div></footer>
+</article></main>
+<script type="application/x-geotochka" data-gt-src="point_loader.js?v=0.96"></script><script type="application/x-geotochka" data-gt-src="qr_code.js"></script><script type="application/x-geotochka" data-gt-src="links.js"></script><script type="application/x-geotochka" data-gt-src="point_card.js?v=2.16"></script><script src="site_config.js"></script>
+<script src="password_gate.js?v=2.10"></script>
+</body></html>
