@@ -277,6 +277,7 @@
     "qr_code.js",
     "report.html",
     "report.js",
+    "request_point.js",
     "search-index.json",
     "site_config.js",
     "style.css",
@@ -34038,6 +34039,6 @@
     "visit.js",
     ".nojekyll"
   ],
-  "generated_by": "Geotochka 2.16",
-  "updated": "2026-11-16T12:07:10"
+  "generated_by": "Geotochka 2.19",
+  "updated": "2026-11-16T12:44:10"
 }

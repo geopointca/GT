@@ -66,9 +66,8 @@
   }
   setupHelpDialog();
 
-  const VIS_DEFAULT = () => ({showPoints:true,coord:true,height:true,visits:true,types:null});
+  const VIS_DEFAULT = () => ({showPoints:true,showNames:false,coord:true,height:true,visits:true});
   let visState = VIS_DEFAULT();
-  let visTypes = [];
   function visHas(v) { return v!==null && v!==undefined && String(v).trim()!==''; }
   function visNumeric(v) { return visHas(v) && Number.isFinite(Number(v)); }
   function visAccept(p) {
@@ -76,7 +75,6 @@
     if (!visState.coord && !coords.some(c=>visNumeric(c.x_coord)&&visNumeric(c.y_coord))) return false;
     if (!visState.height && !visNumeric(p.height) && !coords.some(c=>visNumeric(c.height))) return false;
     if (!visState.visits && !(Array.isArray(p.visits) && p.visits.length) && !p.gb_summary?.event_count && !p.gb_summary?.photo_count) return false;
-    if (visState.types !== null && !visState.types.includes(normalizeOmsCategory(p.category||'Тип не определён'))) return false;
     return true;
   }
   function visStoreKey() { return 'geotochka.visibility.public.'+location.pathname; }
@@ -86,38 +84,26 @@
     try {
       const raw=JSON.parse(localStorage.getItem(visStoreKey())||'null');
       if(raw && typeof raw==='object'){
-        for(const k of ['showPoints','coord','height','visits']) if(typeof raw[k]==='boolean')visState[k]=raw[k];
-        if(Array.isArray(raw.types))visState.types=[...new Set(raw.types.filter(v=>typeof v==='string').map(normalizeOmsCategory))];
+        for(const k of ['showPoints','showNames','coord','height','visits']) if(typeof raw[k]==='boolean')visState[k]=raw[k];
       }
     } catch (_) {}
     if(siteConfig.publish_coordinates===false)visState.coord=true;
   }
   function visSetup() {
-    visTypes=[...new Set((overview?.types||[]).map(normalizeOmsCategory))].sort((a,b)=>a.localeCompare(b,'ru')); 
     const panel=$('publicVisibilityPanel');
     if(siteConfig.publish_coordinates===false){const checkbox=panel.querySelector('[data-vis-flag=coord]');if(checkbox){checkbox.disabled=true;checkbox.closest('label').hidden=true;}}
-    const types=panel.querySelector('[data-vis-types]'); types.replaceChildren();
-    for(const t of visTypes){
-      const label=document.createElement('label');
-      const ck=document.createElement('input');ck.type='checkbox';ck.dataset.visType=t;
-      ck.addEventListener('change',()=>{visState.types=[...types.querySelectorAll('input:checked')].map(x=>x.dataset.visType);visUpdated();});
-      label.append(ck,document.createTextNode(' '+t));types.append(label);
-    }
     $('publicShowPoints').addEventListener('change',e=>{visState.showPoints=e.target.checked;visUpdated();});
+    $('publicShowNames').addEventListener('change',e=>{visState.showNames=e.target.checked;visSync();visRemember();render();});
     panel.querySelectorAll('[data-vis-flag]').forEach(ck=>ck.addEventListener('change',()=>{visState[ck.dataset.visFlag]=ck.checked;visUpdated();}));
-    panel.querySelector('[data-vis-action="all"]').addEventListener('click',()=>{visState.types=null;visUpdated();});
-    panel.querySelector('[data-vis-action="none"]').addEventListener('click',()=>{visState.types=[];visUpdated();});
     panel.querySelector('[data-vis-action="reset"]').addEventListener('click',()=>{visState=VIS_DEFAULT();visUpdated();});
     visSync();
   }
   function visSync() {
     const panel=$('publicVisibilityPanel');if(!panel)return;
     $('publicShowPoints').checked=visState.showPoints;
+    $('publicShowNames').checked=visState.showNames;
     panel.querySelectorAll('[data-vis-flag]').forEach(ck=>ck.checked=visState[ck.dataset.visFlag]);
-    const enabled=visState.types===null?visTypes:visState.types;
-    panel.querySelectorAll('[data-vis-type]').forEach(ck=>ck.checked=enabled.includes(ck.dataset.visType));
-    panel.querySelector('[data-vis-count]').textContent=enabled.filter(v=>visTypes.includes(v)).length+' из '+visTypes.length;
-    $('publicVisibilityBtn').classList.toggle('visibility-active',!visState.showPoints||!visState.coord||!visState.height||!visState.visits||visState.types!==null);
+    $('publicVisibilityBtn').classList.toggle('visibility-active',!visState.showPoints||!visState.coord||!visState.height||!visState.visits);
   }
   function visUpdated() {visSync();visRemember();render();searchResults();}
 
@@ -175,7 +161,7 @@
   function regionValue(p){return [p.region_code,p.region].filter(x=>x!==null&&x!==undefined&&x!=='').join(' — ');}
   function matchesOverviewGroup(r){
     const region=$('regionFilter').value;
-    return (!region||r[3]===region)&&(visState.types===null||visState.types.includes(r[4]))&&
+    return (!region||r[3]===region)&&
       (visState.coord||!!r[5])&&(visState.height||!!r[6])&&(visState.visits||!!r[7]);
   }
   function bboxPoint(bounds,lat,lon){
@@ -261,7 +247,7 @@
       const [lon,lat]=f.geometry.coordinates;
       return {id:String(f.properties?.id||''),lat:Number(lat),lon:Number(lon),f};
     }),{icon:r=>pointIcon(r.f.properties?.category,r.f.properties?.condition,false),
-       tooltip:r=>esc(r.f.properties?.name||'Без названия'),click:(r,m)=>show(r.f,m)});
+       showLabels:visState.showNames,tooltip:r=>esc(r.f.properties?.name||'Без названия'),click:(r,m)=>show(r.f,m)});
     markers.clear();for(const [id,m] of newMarkers)markers.set(id,m);
     // The count in the header is the total currently matching the filters.
     // It is not a count of files already downloaded.

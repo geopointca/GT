@@ -64,7 +64,6 @@
       if(!v.coord && !(flag&1))return false;
       if(!v.height && !(flag&2))return false;
       if(!v.visits && !(flag&4))return false;
-      if(v.types!==null && !v.types.includes(row[3]))return false;
     }
     return true;
   };

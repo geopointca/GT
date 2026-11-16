@@ -133,7 +133,7 @@
     }else{
       const feature=await window.GeotochkaPointLoader.getById(id);
       if(!feature){render(null);return;}
-      // The same full observation history is already published for the visit tab.
+      // The same full observation history is already published for the sidebar history.
       // Fetch it on demand so the map itself remains fast with millions of points.
       let history=null;
       const p=feature.properties||{};

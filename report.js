@@ -1,6 +1,9 @@
 (async()=>{'use strict';const $=id=>document.getElementById(id);const id=new URLSearchParams(location.search).get('id');const point=await window.GeotochkaPointLoader.getById(id);const p=point?.properties||{};
-if(!point||!p.point_code){$('point').textContent='Пункт не найден';return;}
-$('point').textContent=(p.name||'Пункт')+' · '+p.point_code;$('form').hidden=false;
+if(!point){$('point').textContent='Пункт не найден на опубликованной карте';return;}
+const ref=window.GeotochkaRequestPoint(p);
+if(!ref){$('point').textContent='Пункт загружен, но для заявки требуется обновлённая публикация каталога или GeoTochka ID.';return;}
+const requestLabel=ref.point_code||'ID-'+ref.catalog_point_id;
+$('point').textContent=[p.name||'Пункт',p.point_code].filter(Boolean).join(' · ');$('form').hidden=false;
 const fields=[['name','Название / номер'],['category','Тип пункта'],['region','Регион'],['district','Район'],['condition','Состояние'],['description','Описание / подход'],['center_description','Описание центра'],['height','Высота H, м'],['lat','Широта WGS84'],['lon','Долгота WGS84']];
 // The visitor cannot propose arbitrary statuses or point types. Keep choices in
 // sync with editor/index.html. Historical values that are not in these lists
@@ -53,8 +56,8 @@ $('form').onsubmit=async e=>{e.preventDefault();try{const changes={};for(const [
     // Do not submit a historical free-text status or type as a proposed edit.
     if(v!==KEEP&&v!==selectInitial[key])changes[key]=v;
   }else if(v!==originals[key])changes[key]=v;
-}const updated=[...$('coordinates').children].map(row=>{const x={};row.querySelectorAll('input').forEach(input=>x[input.dataset.field]=input.value.trim());return x;}).filter(x=>x.crs||x.x_coord||x.y_coord||x.height);if(JSON.stringify(updated)!==JSON.stringify(coords))changes.coordinates=updated;
+}const updated=[...$('coordinates').children].map(row=>{const x={};row.querySelectorAll('input').forEach(input=>x[input.dataset.field]=input.value.trim());return x;}).filter(x=>x.crs||x.x_coord||x.y_coord||x.height);if(config.publish_coordinates!==false&&JSON.stringify(updated)!==JSON.stringify(coords))changes.coordinates=updated;
 const wrong=$('wrongCoords').checked,comment=$('comment').value.trim();if(!Object.keys(changes).length&&!wrong&&!comment)throw Error('Не указано ни одного исправления');
-const zip=new JSZip(),uid=crypto.randomUUID();zip.file('report.json',JSON.stringify({format:'geotochka-report',version:1,request_id:uid,point_code:p.point_code,point_name:p.name||'',snapshot:{fields:originals,coordinates:coords},changes,wrong_coordinates:wrong,comment,created_at:new Date().toISOString()},null,2));const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`GT_REPORT_${p.point_code}_${uid.slice(0,8)}.zip`;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);$('result').className='ok';$('result').textContent='Заявка скачана. Отправь ZIP владельцу каталога для рассмотрения.';
+const zip=new JSZip(),uid=crypto.randomUUID();zip.file('report.json',JSON.stringify({format:'geotochka-report',version:1,request_id:uid,...ref,point_name:p.name||'',snapshot:{fields:originals,coordinates:coords},changes,wrong_coordinates:wrong,comment,created_at:new Date().toISOString()},null,2));const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`GT_REPORT_${requestLabel}_${uid.slice(0,8)}.zip`;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);$('result').className='ok';$('result').textContent='Заявка скачана. Отправь ZIP владельцу каталога для рассмотрения.';
 }catch(err){$('result').className='warn';$('result').textContent=err.message;}};
 })().catch(err=>{const x=document.getElementById('point');if(x)x.textContent='Ошибка загрузки пункта: '+err.message;console.warn(err)});

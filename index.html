@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Геоточка — карта геодезических пунктов</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
-  <link rel="stylesheet" href="style.css?v=2.17" />
+  <link rel="stylesheet" href="style.css?v=2.18" />
 </head>
 <body>
 <dialog id="welcomeDialog" class="welcome-dialog" aria-labelledby="welcomeDialogTitle" aria-modal="true">
@@ -35,14 +35,12 @@
     <button type="button" id="publicVisibilityBtn" class="visibility-trigger" aria-expanded="false">◉ Вид</button>
 <div class="visibility-panel" id="publicVisibilityPanel" hidden>
   <label class="visibility-master"><input type="checkbox" id="publicShowPoints" checked> Показывать пункты на карте</label>
+  <label><input type="checkbox" id="publicShowNames"> Показывать названия пунктов</label>
   <div class="visibility-panel-title">Фильтры пунктов</div>
   <label><input type="checkbox" data-vis-flag="coord" checked> Без координат в СК</label>
   <label><input type="checkbox" data-vis-flag="height" checked> Без высотных отметок</label>
   <label><input type="checkbox" data-vis-flag="visits" checked> Без посещений</label>
-  <div class="visibility-panel-title visibility-type-title">Типы пунктов</div>
-  <div class="visibility-type-actions"><button type="button" data-vis-action="all">Все</button><button type="button" data-vis-action="none">Ни одного</button></div>
-  <div class="visibility-types" data-vis-types></div>
-  <div class="visibility-type-actions"><button type="button" data-vis-action="reset">Сбросить</button><span data-vis-count></span></div>
+  <div class="visibility-reset"><button type="button" data-vis-action="reset">Сбросить</button></div>
 </div>
   </div>
   <button type="button" id="importKmlBtn" class="import-kml-trigger" title="Добавить временные объекты KML на карту">⬆ Импорт KML</button>
@@ -95,12 +93,12 @@
 </main>
 <script type="application/x-geotochka" data-gt-src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 
-<script type="application/x-geotochka" data-gt-src="point_loader.js?v=0.96"></script>
+<script type="application/x-geotochka" data-gt-src="point_loader.js?v=2.18"></script>
 <script type="application/x-geotochka" data-gt-src="point_tools.js"></script>
 <script type="application/x-geotochka" data-gt-src="map_density.js"></script>
 <script type="application/x-geotochka" data-gt-src="kml_import.js"></script>
 <script type="application/x-geotochka" data-gt-src="links.js"></script>
-<script type="application/x-geotochka" data-gt-src="app.js?v=2.17"></script>
+<script type="application/x-geotochka" data-gt-src="app.js?v=2.19"></script>
 <script src="site_config.js"></script>
 <script src="password_gate.js?v=2.10"></script>
 </body>

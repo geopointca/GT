@@ -3,9 +3,14 @@ const $=id=>document.getElementById(id), id=new URLSearchParams(location.search)
 const point=await window.GeotochkaPointLoader.getById(id);
 const form=$('form');const p=point?.properties||{};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-if(!point||!p.point_code){$('point').textContent='Пункт не найден на опубликованной карте';form.hidden=true;return;}
-$('point').innerHTML=`<strong>${esc(p.name)}</strong><div>${esc(p.point_code)} · ${esc(p.category||'')}</div><div>${esc(p.region||'')}</div><div class="muted">Текущий статус: ${esc(p.condition||'Неизвестно')}</div>`;
-$('date').value=new Date().toLocaleDateString('en-CA');
+if(!point){$('point').textContent='Пункт не найден на опубликованной карте';return;}
+const ref=window.GeotochkaRequestPoint(p);
+if(!ref){$('point').textContent='Пункт загружен, но для заявки требуется обновлённая публикация каталога или GeoTochka ID.';return;}
+const requestLabel=ref.point_code||'ID-'+ref.catalog_point_id;
+$('point').innerHTML=`<strong>${esc(p.name)}</strong><div>${esc(p.point_code||'Без GeoTochka ID')} · ${esc(p.category||'')}</div><div>${esc(p.region||'')}</div><div class="muted">Текущий статус: ${esc(p.condition||'Неизвестно')}</div>`;
+const today=new Date();
+$('date').value=[today.getFullYear(),today.getMonth()+1,today.getDate()].map(n=>String(n).padStart(2,'0')).join('-');
+form.hidden=false;
 $('photos').addEventListener('change',()=>{$('photoNames').textContent=[...$('photos').files].map(x=>x.name).join(' · ')});
 form.addEventListener('submit',async ev=>{ev.preventDefault();const btn=$('generate');btn.disabled=true;
 try{
@@ -22,8 +27,8 @@ for(let i=0;i<files.length;i++){
  const path=`photos/photo_${String(i+1).padStart(3,'0')}.${ext}`;zip.file(path,raw);photos.push({path,name:file.name,caption:''});
 }
 const request_id=crypto.randomUUID();
-zip.file('visit.json',JSON.stringify({format:'geotochka-visit',version:1,request_id,point_code:p.point_code,point_name:p.name||'',visit_date:$('date').value,observer:$('observer').value.trim(),description:$('description').value.trim(),proposed_status:'',center_rating:$('center_rating').value,sign_rating:$('sign_rating').value,photos},null,2));
-const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:5}});const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download=`GT_VISIT_${p.point_code}_${$('date').value}_${request_id.slice(0,8)}.zip`;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
+zip.file('visit.json',JSON.stringify({format:'geotochka-visit',version:1,request_id,...ref,point_name:p.name||'',visit_date:$('date').value,observer:$('observer').value.trim(),description:$('description').value.trim(),proposed_status:'',center_rating:$('center_rating').value,sign_rating:$('sign_rating').value,photos},null,2));
+const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:5}});const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download=`GT_VISIT_${requestLabel}_${$('date').value}_${request_id.slice(0,8)}.zip`;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
 $('result').hidden=false;$('result').className='msg';$('result').innerHTML='<b>ZIP-пакет создан и скачан.</b><p>Отправьте его вложением на <a href="mailto:geopointca@gmail.com?subject=GeoTochka%20Visit">geopointca@gmail.com</a>. Не меняйте содержимое архива. Спасибо за помощь проекту!</p>';
 }catch(err){$('result').hidden=false;$('result').className='warn';$('result').textContent=err.message||String(err);}finally{btn.disabled=false;}
 });
