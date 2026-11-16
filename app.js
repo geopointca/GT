@@ -297,18 +297,9 @@
     return L.divIcon({className:"geo-point-icon",html:`<svg viewBox="0 0 28 28" width="14" height="14" aria-hidden="true">${body}</svg>`,iconSize:[14,14],iconAnchor:[7,7],tooltipAnchor:[0,-8]});
   }
   function esc(s){return String(s??"").replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[c]));}
-  // Separate quick card and history. Full imported history is published per-point and fetched only on demand.
-  const histEsc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  let pubTab='card',historyToken=0;
-  function setPublicTab(which){
-    pubTab=which;
-    $('pubCardBody').hidden=which!=='card';$('pubVisitsBody').hidden=which!=='visits';
-    // Existing local photo preview stays on the visits tab.
-    $('photoPreview').hidden=true;
-    for(const [id,val] of [['pubCardTab','card'],['pubVisitsTab','visits']]){$(id).classList.toggle('active',which===val);$(id).setAttribute('aria-selected',String(which===val));}
-    if(which==='visits' && current)renderPublicVisitTab(current.properties||{});
-  }
-  $('pubCardTab').onclick=()=>setPublicTab('card');$('pubVisitsTab').onclick=()=>setPublicTab('visits');
+  // Load imported history only for the currently open point.
+  const histEsc=esc;
+  let historyToken=0;
   function ratingBlock(votes,recent){
     const groups=[['center','Состояние центра'],['sign','Наружный знак']];
     let out='';for(const [key,title] of groups){const vals=votes?.[key]||{};
@@ -320,30 +311,53 @@
     return out;
   }
   function safePhoto(url){try{const u=new URL(url);return u.protocol==='https:'&&u.hostname==='storage.yandexcloud.net'?u.href:null}catch{return null}}
-  async function renderPublicVisitTab(p){
+  async function renderPublicHistory(p){
     const token=++historyToken;
+    const timeline=$('publicVisitTimeline'), status=$('publicHistoryStatus'), box=$('publicVisitPhotos');
     $('publicRatings').innerHTML=ratingBlock(p.gb_summary?.votes,p.gb_summary?.recent_ratings);
-    const visits=(p.visits||[]).slice().sort((a,b)=>String(b.visit_date||'').localeCompare(String(a.visit_date||'')));
-    $('publicVisitTimeline').innerHTML='<h3>Журнал наблюдений</h3>'+visits.map(v=>`<div class="history-card"><div class="history-date">${histEsc(v.visit_date||'Без даты')}</div>${window.GeotochkaLinks.html(v.description||'',p.links)}</div>`).join('')+'<p class="history-caption">Загрузка дополнительных записей…</p>';
-    $('publicVisitPhotos').innerHTML='';
-    let hist={ratings:[],comments:[],photos:[]};
-    if(p.gb_summary?.event_count||p.gb_summary?.photo_count){try{const bucket=String(Number(p.id)%256).padStart(3,'0');const res=await fetch('history/h_'+bucket+'.json?v='+encodeURIComponent(siteConfig.data_version||''));if(res.ok)hist=(await res.json())[String(p.id)]||hist;}catch(_){}}
+    box.replaceChildren();box.hidden=true;
+    const needsHistory=Boolean(p.gb_summary?.event_count||p.gb_summary?.photo_count);
+    const visits=(p.visits||[]).map(v=>({date:v.visit_date||'',text:v.description||'',tag:'Посещение',author:v.visitor||v.observer||''}));
+    let entries=[],shown=5,pending=needsHistory,failed=false;
+    function draw(){
+      timeline.replaceChildren();
+      for(const entry of entries.slice(0,shown)){const card=document.createElement('div');card.className='history-card';const day=document.createElement('div');day.className='history-date';day.textContent=entry.date||'Без даты';const kind=document.createElement('span');kind.className='history-kind';kind.textContent=entry.tag;day.append(' · ',kind);const text=document.createElement('div');text.className='history-entry-text';text.innerHTML=window.GeotochkaLinks.html(entry.text||'—',p.links);card.append(day,text);if(entry.author){const author=document.createElement('small');author.className='history-author';author.textContent=entry.author;card.append(author)}timeline.append(card)}
+      if(!entries.length&&!pending&&!failed){const empty=document.createElement('p');empty.textContent='Записей пока нет.';timeline.append(empty)}
+      if(entries.length>shown){const btn=document.createElement('button');btn.className='history-load';btn.textContent='Показать ещё';btn.onclick=()=>{shown+=10;draw()};timeline.append(btn)}
+      status.textContent=pending?'Загрузка дополнительных записей…':failed?'Не удалось загрузить дополнительные записи.':'';
+      status.hidden=!status.textContent;
+    }
+    function update(hist){
+      entries=[
+        ...visits,
+        ...(hist.comments||[]).map(v=>({date:v.date||'',text:v.text||'',tag:'Комментарий'})),
+        ...(hist.ratings||[]).map(v=>({date:v.date||'',text:v.label||'',tag:v.object==='sign'?'Оценка знака':'Оценка центра'}))
+      ].sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+      draw();
+      renderPhotos(hist);
+    }
+    function renderPhotos(hist){
+      const localPhotos=[...(p.images||[])].sort((a,b)=>(Number(b.is_primary)-Number(a.is_primary))||String(b.date_taken||'').localeCompare(String(a.date_taken||'')));
+      const photoLinks=[...localPhotos,...(hist.photos||[])].map(x=>x.url).filter(Boolean);
+      box.replaceChildren();
+      box.hidden=!photoLinks.length;
+      if(!photoLinks.length)return;
+      const h=document.createElement('h3');h.textContent='Фотографии ('+photoLinks.length+')';box.append(h);
+      const grid=document.createElement('div');grid.className='history-photo-grid';box.append(grid);let photoShown=5;
+      function drawPhotos(){grid.replaceChildren();for(const u of photoLinks.slice(0,photoShown)){const safe=safePhoto(u)||(/^images\/[0-9]+\/[a-zA-Z0-9_.-]+$/.test(u)?u:null);if(!safe)continue;const a=document.createElement('a');a.href=safe;a.rel='noopener noreferrer';a.target='_blank';const img=document.createElement('img');img.src=safe;img.loading='lazy';img.alt='Фото пункта';a.append(img);grid.append(a)}if(box.querySelector('.history-load'))box.querySelector('.history-load').remove();if(photoLinks.length>photoShown){const b=document.createElement('button');b.className='history-load';b.textContent='Показать ещё фото';b.onclick=()=>{photoShown+=10;drawPhotos()};box.append(b)}}drawPhotos();
+    }
+    update({});
+    if(!needsHistory)return;
+    let hist={};
+    try{
+      const bucket=String(Number(p.id)%256).padStart(3,'0');
+      const res=await fetch('history/h_'+bucket+'.json?v='+encodeURIComponent(siteConfig.data_version||''));
+      if(!res.ok)throw new Error('History unavailable');
+      hist=(await res.json())[String(p.id)]||{};
+    }catch(_){failed=true;}
     if(token!==historyToken)return;
-    const entries=[
-      ...visits.map(v=>({date:v.visit_date||'',text:v.description||'',tag:'Посещение',author:v.visitor||v.observer||''})),
-      ...(hist.comments||[]).map(v=>({date:v.date||'',text:v.text||'',tag:'Комментарий'})),
-      ...(hist.ratings||[]).map(v=>({date:v.date||'',text:v.label||'',tag:v.object==='sign'?'Оценка знака':'Оценка центра'}))
-    ].sort((a,b)=>String(b.date).localeCompare(String(a.date)));
-    let shown=5;
-    function draw(){const box=$('publicVisitTimeline');box.replaceChildren();const heading=document.createElement('h3');heading.textContent='Журнал наблюдений';box.append(heading);
-      for(const entry of entries.slice(0,shown)){const card=document.createElement('div');card.className='history-card';const day=document.createElement('div');day.className='history-date';day.textContent=entry.date||'Без даты';const kind=document.createElement('span');kind.className='history-kind';kind.textContent=entry.tag;day.append(' · ',kind);const text=document.createElement('div');text.className='history-entry-text';text.innerHTML=window.GeotochkaLinks.html(entry.text||'—',p.links);card.append(day,text);if(entry.author){const author=document.createElement('small');author.className='history-author';author.textContent=entry.author;card.append(author)}box.append(card)}
-      if(!entries.length){const empty=document.createElement('p');empty.textContent='Записей пока нет.';box.append(empty)}
-      if(entries.length>shown){const btn=document.createElement('button');btn.className='history-load';btn.textContent='Показать ещё';btn.onclick=()=>{shown+=10;draw()};box.append(btn)}
-    }draw();
-    const photoLinks=[...(p.images||[]).map(x=>x.url).filter(Boolean),...(hist.photos||[]).map(x=>x.url)].filter(Boolean);
-    const box=$('publicVisitPhotos');box.replaceChildren();const h=document.createElement('h3');h.textContent='Фотографии ('+photoLinks.length+')';box.append(h);
-    const grid=document.createElement('div');grid.className='history-photo-grid';box.append(grid);let photoShown=5;
-    function drawPhotos(){grid.replaceChildren();for(const u of photoLinks.slice(0,photoShown)){const safe=safePhoto(u)||(/^images\/[0-9]+\/[a-zA-Z0-9_.-]+$/.test(u)?u:null);if(!safe)continue;const a=document.createElement('a');a.href=safe;a.rel='noopener noreferrer';a.target='_blank';const img=document.createElement('img');img.src=safe;img.loading='lazy';img.alt='Фото пункта';a.append(img);grid.append(a)}if(box.querySelector('.history-load'))box.querySelector('.history-load').remove();if(photoLinks.length>photoShown){const b=document.createElement('button');b.className='history-load';b.textContent='Показать ещё фото';b.onclick=()=>{photoShown+=10;drawPhotos()};box.append(b)}}drawPhotos();
+    pending=false;
+    update(hist);
   }
   function show(f,m,updateUrl=true){current=f; if(updateUrl)writePointUrl(f);const p=f.properties||{};const [lon,lat]=f.geometry.coordinates;$("panelEmpty").hidden=true;$("panelContent").hidden=false;$("infoPanel").classList.add("open");$("pointCategory").textContent=normalizeOmsCategory(p.category)||"Геодезический пункт";$("pointName").textContent=p.name||"Без названия";$("pointCode").textContent=p.point_code||"";const pill=$("conditionPill");pill.textContent=p.condition||"Состояние не указано";pill.style.color=color(p.condition);pill.style.background=color(p.condition)+"15";
     const rows=[
@@ -356,17 +370,8 @@
       box.appendChild(block);
     }
     const mats=document.createElement("div");mats.className="public-materials";mats.innerHTML=window.GeotochkaLinks.listMarkup(p.links);if(mats.innerHTML)box.appendChild(mats);
-    const photos=(p.images||[]).filter(x=>x&&x.url);
-    const photoBox=$("photoPreview");
-    if(photoBox){
-      if(photos.length){
-        const sorted=[...photos].sort((a,b)=>(Number(b.is_primary)-Number(a.is_primary))||String(b.date_taken||"").localeCompare(String(a.date_taken||"")));
-        const shown=sorted.slice(0,3);
-        photoBox.hidden=false;
-        photoBox.innerHTML=`<div class="photo-preview-title">Изображения</div><div class="photo-preview-grid">${shown.map(ph=>`<a href="${esc(ph.url)}" target="_blank" rel="noopener" title="${esc(ph.caption||ph.image_type||"")}"><img src="${esc(ph.url)}" alt="${esc(ph.caption||"")}"></a>`).join("")}</div>${photos.length>3?`<div class="photo-preview-more">Ещё ${photos.length-3} — в карточке пункта</div>`:""}`;
-      }else{photoBox.hidden=true;photoBox.innerHTML="";}
-    }
-    setPublicTab("card");
+    $('infoPanel').scrollTop=0;
+    renderPublicHistory(p);
     const card=$("pointCardBtn"); if(card){card.onclick=()=>window.open(`point_card.html?id=${encodeURIComponent(p.id)}`,"_blank","noopener");}
     const addInfo=$("addInfoBtn"); if(addInfo) addInfo.onclick=()=>window.open(`visit.html?id=${encodeURIComponent(p.id)}`,"_blank","noopener");
     const reportBtn=$("reportErrorBtn"); if(reportBtn) reportBtn.onclick=()=>window.open(`report.html?id=${encodeURIComponent(p.id)}`,"_blank","noopener");
@@ -511,7 +516,7 @@
     }
     render();searchResults();
   };
-  $('closePanel').onclick=()=>{$('infoPanel').classList.remove('open');current=null;const u=new URL(location.href);u.searchParams.delete('point');u.searchParams.delete('id');history.replaceState(null,'',u.pathname+u.search+u.hash)};
+  $('closePanel').onclick=()=>{$('infoPanel').classList.remove('open');current=null;++historyToken;const u=new URL(location.href);u.searchParams.delete('point');u.searchParams.delete('id');history.replaceState(null,'',u.pathname+u.search+u.hash)};
   $('copyCoords').onclick=async()=>{
     if(!current)return;const [lon,lat]=current.geometry.coordinates,t=`${lat.toFixed(7)}, ${lon.toFixed(7)}`;
     try{await navigator.clipboard.writeText(t);$('copyCoords').textContent='Скопировано';setTimeout(()=>$('copyCoords').textContent='Копировать WGS84',1000)}

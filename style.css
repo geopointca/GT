@@ -31,7 +31,6 @@
 .actions{flex-wrap:wrap}.actions .primary-action{background:#1463ff;color:#fff;border-color:#1463ff;font-weight:600}.actions .primary-action:hover{background:#0f54d8}.actions button,.actions a{cursor:pointer}.actions a{display:inline-flex;align-items:center}
 
 /* v0.8 photo previews */
-.photo-preview{padding:10px 0;border-bottom:1px solid #edf0f2}.photo-preview-title{font-size:10px;color:#7a858f;margin-bottom:6px}.photo-preview-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}.photo-preview-grid a{display:block;aspect-ratio:4/3;border-radius:6px;overflow:hidden;background:#eef1f4;border:1px solid #e0e5e9}.photo-preview-grid img{width:100%;height:100%;object-fit:cover;display:block}.photo-preview-more{font-size:10px;color:#6f7b85;margin-top:5px}
 
 /* v0.11 project message area */
 body{grid-template-rows:auto 62px 1fr}
@@ -109,9 +108,6 @@ body{display:flex;flex-direction:column;overflow:hidden}
 
 
 /* v0.46: separate card and visit journal */
-.point-tabbar{display:flex;gap:6px;margin:14px 0 12px;padding:4px;border-radius:10px;background:rgba(115,130,150,.12)}
-.point-tabbar button{flex:1;border:0;background:transparent;padding:9px 12px;border-radius:8px;cursor:pointer;font-weight:700;color:inherit}
-.point-tabbar button.active{background:#2867ad;color:white;box-shadow:0 1px 5px #0002}
 .rating-block{margin:10px 0;padding:12px;border:1px solid #c9d7e1;border-radius:10px}
 .rating-block h3{margin:0 0 8px;font-size:14px}
 .rating-line{display:flex;align-items:center;gap:9px;margin:6px 0;font-size:13px}
@@ -188,9 +184,6 @@ body{display:flex;flex-direction:column;overflow:hidden}
 .info-panel .kicker{font-size:10px;letter-spacing:.045em}
 .info-panel .code{font:11px/1.4 Consolas,monospace;color:#6b7b89}
 .info-panel .condition{font-size:11px;padding:3px 8px;margin:7px 0 8px}
-.info-panel .point-tabbar{padding:3px;gap:3px;margin:10px 0 9px;border:1px solid #e1e6eb;border-radius:7px;background:#f3f6f9}
-.info-panel .point-tabbar button{font-size:12px;font-weight:650;padding:7px 9px;border-radius:5px;box-shadow:none}
-.info-panel .point-tabbar button.active{background:#2e658f;color:#fff;box-shadow:none}
 .info-panel .row{padding:6px 1px;font-size:12px;grid-template-columns:112px minmax(0,1fr);gap:10px}
 .info-panel .rating-block{margin:7px 0;padding:8px 10px;border:1px solid #dae2e8;border-radius:6px;background:#fff}
 .info-panel .rating-block h3{font-size:12px;font-weight:650;margin:0 0 5px;color:#34495b}
@@ -233,3 +226,7 @@ body{display:flex;flex-direction:column;overflow:hidden}
 #publicVisitTimeline .history-author{display:block;color:#6e8090;font-size:10px;margin-top:5px}
 #publicRatings .rating-block{padding:7px 9px;margin:7px 0}
 #publicRatings .rating-block h3{font-size:12px;line-height:1.35;margin:0 0 5px}
+
+.public-point-history{margin-top:16px;padding-top:12px;border-top:1px solid #dde5ec}
+.public-point-history h2{margin:0 0 8px;font-size:14px;line-height:1.35;color:#263b4d}
+.public-point-history #publicVisitPhotos h3{margin:12px 0 5px;font-size:12px;color:#34495b}

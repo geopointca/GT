@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Геоточка — карта геодезических пунктов</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=2.17" />
 </head>
 <body>
 <dialog id="welcomeDialog" class="welcome-dialog" aria-labelledby="welcomeDialogTitle" aria-modal="true">
@@ -70,10 +70,7 @@
       <h1 id="pointName"></h1>
       <div id="pointCode" class="code"></div>
       <div id="conditionPill" class="condition"></div>
-      <div class="point-tabbar" role="tablist"><button type="button" id="pubCardTab" class="active" aria-selected="true">Карточка</button><button type="button" id="pubVisitsTab" aria-selected="false">Посещения</button></div>
-      <div id="pubCardBody"><div id="detailsTable" class="details"></div></div>
-      <div id="pubVisitsBody" hidden><div id="publicRatings"></div><div id="publicVisitTimeline"></div><div id="publicVisitPhotos"></div></div>
-      <div id="photoPreview" class="photo-preview" hidden></div>
+      <div id="detailsTable" class="details"></div>
       <div class="actions">
         <button id="pointCardBtn" class="primary-action">Создать карточку пункта</button>
         <button id="exportKmlBtn">Экспорт KML</button>
@@ -81,8 +78,14 @@
         <button id="reportErrorBtn" class="visit-action" style="background:#fff;color:#15569a;border:1px solid #cbd7e4;margin-top:8px">Сообщить об ошибке</button>
         <button id="copyCoords">Копировать WGS84</button>
         <button id="copyPointLinkBtn" type="button" title="Скопировать прямую ссылку на этот пункт">Копировать ссылку на пункт</button>
-        
       </div>
+      <section id="pubVisitsBody" class="public-point-history" aria-labelledby="publicHistoryTitle">
+        <h2 id="publicHistoryTitle">Посещения и комментарии</h2>
+        <div id="publicRatings"></div>
+        <div id="publicVisitTimeline"></div>
+        <p id="publicHistoryStatus" class="history-caption" role="status" hidden></p>
+        <div id="publicVisitPhotos" hidden></div>
+      </section>
     </div>
   </aside>
   <div class="map-service-footer" aria-label="Условные обозначения карты">
@@ -97,7 +100,7 @@
 <script type="application/x-geotochka" data-gt-src="map_density.js"></script>
 <script type="application/x-geotochka" data-gt-src="kml_import.js"></script>
 <script type="application/x-geotochka" data-gt-src="links.js"></script>
-<script type="application/x-geotochka" data-gt-src="app.js?v=2.16"></script>
+<script type="application/x-geotochka" data-gt-src="app.js?v=2.17"></script>
 <script src="site_config.js"></script>
 <script src="password_gate.js?v=2.10"></script>
 </body>
